@@ -322,10 +322,9 @@ const std::string loadFromFile( std::string filename)
 {
     std::string line;
     std::string allText;
-    std::string directory = "../src/";
 
     // open file in src directory
-    std::ifstream myfile ( directory + filename );
+    std::ifstream myfile ( filename );
 
     // if file exists
     if (myfile.is_open())
