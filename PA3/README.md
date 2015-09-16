@@ -56,6 +56,7 @@ Press the 'down' key to reverse the moon's orbit.
 *Be sure the planet's orbit is not paused before pressing the right mouse button, reversing the orbit will have not effect if the cube's orbit is paused*
 
 Comments to graders:
+------------------------------
 I took a rather agressive approach to put the objects with their own data in a class system. This makes it easy for me to add planets and moons with unique params (rotation speed, parent planet, etc) with just a few lines of code. If this was a bad idea just let me know and I can go back no problem.
 
 
