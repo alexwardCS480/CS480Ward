@@ -57,7 +57,7 @@ Press the 'down' key to reverse the moon's orbit.
 
 Comments to graders:
 ------------------------------
-I took a rather agressive approach to put the objects with their own data in a class system. This makes it easy for me to add planets and moons with unique params (rotation speed, parent planet, etc) with just a few lines of code. If this was a bad idea just let me know and I can go back no problem.
+I took a rather aggressive sive approach to put the objects with their own data in a class system. This makes it easy for me to add planets and moons with unique params (rotation speed, parent planet, etc) with just a few lines of code. If this was a bad idea just let me know and I can go back no problem.
 
 
 
