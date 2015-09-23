@@ -26,32 +26,9 @@ The excutable will be put in bin
 Run Notes:
 ------------------------------
 
-Press the right mouse button to open the programs menu. From the menu you can pause the planet's and moon's orbit and rotation.
+The hockey table rotates and orbits so the grader can see all sides. The color changes slightly between triangles in order to see the object correctly. 
+
+Press the right mouse button to open the programs menu. From the menu you can pause the hockey table's rotation and orbit.
 
 
-
-Press the left mouse button to reverse the planet's orbit.
-
-Press the 'a' key to reverse the planets's rotation.
-
-Press the 'b' key to reverse the moon's rotation.
-
-Press the 'c' key to reverse the planet's orbit.
-
-Press the 'd' key to reverse the moon's rotation.
-
-
-
-Press the 'left' key to reverse the planets's rotation.
-
-Press the 'right' key to reverse the planet's orbit.
-
-Press the 'up' key to reverse the moon's rotation.
-
-Press the 'down' key to reverse the moon's orbit.
-
-
-*Be sure the planet's and moon's rotation is not paused before pressing any key, reversing the rotation will have not effect if the cube's rotation is paused*
-
-*Be sure the planet's orbit is not paused before pressing the right mouse button, reversing the orbit will have not effect if the cube's orbit is paused*
-
+Press the left mouse button to reverse the hockey table's orbit.
