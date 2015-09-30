@@ -2,7 +2,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -28,5 +27,5 @@
 *.app
 
 # Backup files
- *~
- *.~
+*~
+*.~
