@@ -7,5 +7,5 @@ GROUP PROJECTS:
 Please see Jeffrey Bouchard's repository for code. ALL group projects are in his repository.
 
 TEAM MEMBERS:
-Alex Ward 
+Alex Ward,
 Jeffrey Bouchard
