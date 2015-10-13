@@ -1,0 +1,6 @@
+sun 0 none 432474 sunmap.jpg 0 0 1 0
+mercury 0 sun 1516 mercurymap.jpg 0.467 0.307 2 .5
+venus 0 sun 3760 venusmap.jpg 0.728 0.718 2 .4
+earth 0 sun 3959 earth.jpg 1.017 0.983 2 .3
+mars 0 sun 2106 marsmap.jpg 1.666 1.382 2 .2
+// this is what the data is supposed to look like: fin >> objectName >> isParent >> parentName >> scale >> textureName >> xOrbit >> yOrbit >> rotSpeed >> orbSpeed; scale is planet radius in miles, orbit x and y are AU. 

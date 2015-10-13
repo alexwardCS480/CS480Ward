@@ -38,6 +38,7 @@ struct Vertex
 int w = 640, h = 480;// Window size
 GLuint program;// The GLSL program handle
 GLuint vbo_geometry;// VBO handle for our geometry
+string textureFileName = "";
 
 //Make an object class containing a list of all objects to store rotation/orbit flags
 ObjectData objectsDataList;
@@ -78,7 +79,8 @@ int numberTriangles = 0;
 float getDT();
 std::chrono::time_point<std::chrono::high_resolution_clock> t1,t2;
          
- 
+Magick::PixelPacket* loadTextureImage(int &width, int &height); 
+
 //--Main 
 int main(int argc, char *argv[])
 {
@@ -121,7 +123,6 @@ int main(int argc, char *argv[])
     if(argc <= 1) 
     {
         std::cout << "No obj file found!" << std::endl;
-        //cleanUp();
         return 0;
     }
 
@@ -175,7 +176,6 @@ void renderObject ( glm::mat4 MVP )
 
 
     //set up the Vertex Buffer Object so it can be drawn
-
     glEnableVertexAttribArray(loc_position);
     glEnableVertexAttribArray(loc_uv);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_geometry);
@@ -187,15 +187,13 @@ void renderObject ( glm::mat4 MVP )
                            sizeof(Vertex),//stride
                            0);//offset
 
-
-
-
+    // for uv data
     glVertexAttribPointer( loc_uv,
                            2,
                            GL_FLOAT,
                            GL_FALSE,
                            sizeof(Vertex),
-                           (void*)offsetof(Vertex,uv));
+                           (void*)offsetof(Vertex, uv));
 
     glDrawArrays(GL_TRIANGLES, 0, numberTriangles);//mode, starting index, count
 
@@ -231,9 +229,8 @@ bool initialize(char* fileName)
 
     // to load the OBJ file
     Vertex *geometry;
-    
-    loadOBJ(fileName, &geometry);
 
+    loadOBJ(fileName, &geometry);
 
     // Create a Vertex Buffer object to store this vertex info on the GPU
     glGenBuffers(1, &vbo_geometry);
@@ -288,22 +285,26 @@ bool initialize(char* fileName)
 
 
 
-
-    // load in image
+    
+    // load texture image
     Magick::InitializeMagick("");
-
-
     Magick::Image image;
     try 
         { 
          // Read a file into image object 
-         image.read( "capsule0" );
+         if ( textureFileName != "")
+            {
+             image.read( textureFileName );
+            }
+         else
+            {
+             throw std::invalid_argument("No texture file found");
+            }
 
         } 
     catch(exception& tmp) 
         { 
-         cout << "Caught exception: "  << endl; 
-
+         cout << "Error while reading in texture image, texture file not found"  << endl; 
         } 
 
     int imageWidth = image.columns();
@@ -328,7 +329,6 @@ bool initialize(char* fileName)
     glDepthFunc(GL_LESS);
 
 
-
     //and its done
     return true;
 }
@@ -344,28 +344,29 @@ bool loadOBJ(const char * obj, Vertex **data)
     //not yet// float *normalArray;
     float *uvArray;
 
+
     int numVerts;
 
     // extract data
     numVerts = mesh->mNumFaces*3;
-
     *data = new Vertex[numVerts];
-
     vertexArray = new float[mesh->mNumFaces*3*3];
     //normalArray = new float[mesh->mNumFaces*3*3];
     uvArray = new float[mesh->mNumFaces*3*2];
 
-     
+
     for(unsigned int i=0;i<mesh->mNumFaces;i++)
     {
         const aiFace& face = mesh->mFaces[i];
         
         for(int j=0;j<3;j++)
         {
-            
-            aiVector3D uv = mesh->mTextureCoords[0][face.mIndices[j]];
-            memcpy(uvArray,&uv,sizeof(float)*2);
-            uvArray+=2;
+            if ( mesh->HasTextureCoords( 0 ) )
+            {
+                 aiVector3D uv = mesh->mTextureCoords[0][face.mIndices[j]];
+                 memcpy(uvArray,&uv,sizeof(float)*2);
+                 uvArray+=2;
+            }
              
             /*
             aiVector3D normal = mesh->mNormals[face.mIndices[j]];
@@ -402,9 +403,25 @@ bool loadOBJ(const char * obj, Vertex **data)
 
 
          index++;
-         uvIndex+=2;
+         uvIndex+=2;    
          numberTriangles++;
         }
+
+
+
+    // get text file name
+    const aiMaterial* material = scene->mMaterials[1]; 
+    aiString path;  // filename
+    if( mesh->HasTextureCoords( 0 ) )
+        { 
+         material->GetTexture(aiTextureType_DIFFUSE, 0, &path); 
+         textureFileName = path.data; 
+        }
+    else
+        {
+         std::cerr << "obj loader warrning: no texture file specified in obj file" << endl;
+        }
+
 
     return true;
 }

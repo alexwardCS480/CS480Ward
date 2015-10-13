@@ -25,6 +25,7 @@
 
 #include <Magick++.h> 
 
+
 //--Data types
 //This object will define the attributes of a vertex(position, color, etc...)
 struct Vertex
@@ -38,6 +39,7 @@ struct Vertex
 int w = 640, h = 480;// Window size
 GLuint program;// The GLSL program handle
 GLuint vbo_geometry;// VBO handle for our geometry
+string textureFileName = "";
 
 //Make an object class containing a list of all objects to store rotation/orbit flags
 ObjectData objectsDataList;
@@ -48,13 +50,10 @@ GLint loc_mvpmat;// Location of the modelviewprojection matrix in the shader
 //attribute locations
 GLint loc_position;
 GLint loc_uv;
-GLuint aTexture;
 
 //transform matrices
 glm::mat4 view;//world->eye
 glm::mat4 projection;//eye->clip
-glm::mat4 mvp;//premultiplied modelviewprojection
-//glm::mat4 mvpMoon; // dont need anymore
 
 //--GLUT Callbacks
 void render();
@@ -70,7 +69,7 @@ bool initialize(char* fileName);
 void cleanUp();
 
 // custom
-void renderObject ( glm::mat4 MVP );
+void renderObject (  string objectName );
 bool loadOBJ(const char * obj, Vertex **data);
 int numberTriangles = 0;
 
@@ -78,7 +77,10 @@ int numberTriangles = 0;
 float getDT();
 std::chrono::time_point<std::chrono::high_resolution_clock> t1,t2;
          
- 
+Magick::PixelPacket* loadTextureImage(int &width, int &height); 
+void renderAllObjects();
+void loadObjectDataFromFile( string fileName );
+
 //--Main 
 int main(int argc, char *argv[])
 {
@@ -121,7 +123,6 @@ int main(int argc, char *argv[])
     if(argc <= 1) 
     {
         std::cout << "No obj file found!" << std::endl;
-        //cleanUp();
         return 0;
     }
 
@@ -145,18 +146,17 @@ void render()
     glClearColor(0.0, 0.0, 0.2, 1.0); 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-    //matrix MVP for planet
-    mvp = projection * view * objectsDataList.getModelMatrix("object");
-
     //enable the shader program
     glUseProgram(program);
 
-
-    // load each objects mvp
-    renderObject( mvp );
+    renderAllObjects();
 
 
+    // lets look at the earth for some reason
+    view = glm::lookAt( glm::vec3(0.0, 0.0, 4 ), //Eye Position
+                        glm::vec3(objectsDataList.getModelMatrix("earth")[3][0], objectsDataList.getModelMatrix("earth")[3][1], objectsDataList.getModelMatrix("earth")[3][2]), //Focus point
+                        glm::vec3(0.0, 1.0, 0.0)); //Positive Y is up
+ 
     //clean up
     glDisableVertexAttribArray(loc_position);
     glDisableVertexAttribArray(loc_uv);
@@ -164,18 +164,26 @@ void render()
     //swap the buffers
     glutSwapBuffers();
 }
+ 
+void renderAllObjects()
+{
+    for ( int index = 0; index < objectsDataList.getNumObjects(); index++)
+        {
+         renderObject( objectsDataList.getObjectName(index) );        
+        }
 
-void renderObject ( glm::mat4 MVP )
+}
+
+void renderObject ( string objectName )
 {
 
     //upload the matrix to the shader
-    glUniformMatrix4fv(loc_mvpmat, 1, GL_FALSE, glm::value_ptr(MVP));
+    glUniformMatrix4fv(loc_mvpmat, 1, GL_FALSE, glm::value_ptr( projection * view * objectsDataList.getModelMatrix(objectName) ));
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, aTexture);
-
+    glBindTexture(GL_TEXTURE_2D, objectsDataList.getTexture(objectName));
+ 
 
     //set up the Vertex Buffer Object so it can be drawn
-
     glEnableVertexAttribArray(loc_position);
     glEnableVertexAttribArray(loc_uv);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_geometry);
@@ -187,21 +195,19 @@ void renderObject ( glm::mat4 MVP )
                            sizeof(Vertex),//stride
                            0);//offset
 
-
-
-
+    // for uv data
     glVertexAttribPointer( loc_uv,
                            2,
                            GL_FLOAT,
                            GL_FALSE,
                            sizeof(Vertex),
-                           (void*)offsetof(Vertex,uv));
+                           (void*)offsetof(Vertex, uv));
 
     glDrawArrays(GL_TRIANGLES, 0, numberTriangles);//mode, starting index, count
 
 }
 
-
+ 
 void update()
 {
     float dt = getDT();
@@ -215,25 +221,43 @@ void update()
 }
 
 
+void loadObjectDataFromFile( string fileName )
+{
+    string objectName, parentName, textureName;
+    bool isParent;
+    float scale, xOrbit, yOrbit, rotSpeed, orbSpeed;
+    
+    std::ifstream fin;
+    fin.open (fileName, std::ifstream::in);
+
+    while (fin.good())
+        {
+         fin >> objectName >> isParent >> parentName >> scale >> textureName >> xOrbit >> yOrbit >> rotSpeed >> orbSpeed;
+         
+         scale = scale / 432474.0f; // sun is scale of 1
+         xOrbit = xOrbit / 0.307;   // mercury is orbit rad of 1 
+         yOrbit = yOrbit / 0.307;   // mercury is orbit rad of 1 
+
+         objectsDataList.addObject(objectName, isParent, parentName, scale, textureName);  
+         objectsDataList.setSpecialValues(objectName, xOrbit, yOrbit, rotSpeed, orbSpeed); 
+        }
+}
+
+
 bool initialize(char* fileName)    
 {
+    bool loadedSuccess = true;
 
-    // create the main planet cube and moon cube objects
-    objectsDataList.addObject("object", true, "", 4.0f);            // add object with id = planetCube, with scale of 1 
-    //objectsDataList.addObject("moonCube", false, "planetCube", .7f);    // add object with id = moonCube, scale to .7
-    // here is the function def for reference
-    // void addObject(string objID, bool isPlanet, string parent, float scale);
-
-    objectsDataList.setSpecialValues("object", 1.0, 1.0, 0.1f, 0.1f);   // lets make moon rotate faster and skew orbit in x direction for elliptical orbit
-    // here is the function def for reference
-    // void setSpecialValues(string objectName, float xOrbit, float yOrbit, float rotSpeed, float orbSpeed);
-
+    loadObjectDataFromFile( "planetFile.txt" );
 
     // to load the OBJ file
     Vertex *geometry;
-    
-    loadOBJ(fileName, &geometry);
-
+    loadedSuccess = loadOBJ(fileName, &geometry);
+    if ( !loadedSuccess )
+    {
+        cout << "OBJ file not found or invalid format" << endl;
+        return false;
+    }
 
     // Create a Vertex Buffer object to store this vertex info on the GPU
     glGenBuffers(1, &vbo_geometry);
@@ -279,7 +303,7 @@ bool initialize(char* fileName)
     //  for this project having them static will be fine
     view = glm::lookAt( glm::vec3(0.0, 8.0, -16.0), //Eye Position
                         glm::vec3(0.0, 0.0, 0.0), //Focus point
-                        glm::vec3(0.0, 1.0, 0.0)); //Positive Y is up
+                        glm::vec3(0.0, 0.0, 1.0)); //Positive Y is up
 
     projection = glm::perspective( 45.0f, //the FoV typically 90 degrees is good which is what this is set to
                                    float(w)/float(h), //Aspect Ratio, so Circles stay Circular
@@ -287,46 +311,9 @@ bool initialize(char* fileName)
                                    100.0f); //Distance to the far plane, 
 
 
-
-
-    // load in image
-    Magick::InitializeMagick("");
-
-
-    Magick::Image image;
-    try 
-        { 
-         // Read a file into image object 
-         image.read( "capsule0" );
-
-        } 
-    catch(exception& tmp) 
-        { 
-         cout << "Caught exception: "  << endl; 
-
-        } 
-
-    int imageWidth = image.columns();
-    int imageHeight = image.rows();
-
-    // get a "pixel cache" for the entire image
-    Magick::PixelPacket *pixels = image.getPixels(0, 0, imageWidth, imageHeight);
-
-
-    // setup texture
-    glGenTextures(1, &aTexture); 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, aTexture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     //enable depth testing
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-
 
 
     //and its done
@@ -338,34 +325,40 @@ bool loadOBJ(const char * obj, Vertex **data)
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(obj, aiProcess_Triangulate); 
 
+    if ( scene==NULL )
+        {
+         return false;
+        }
+
     aiMesh *mesh = scene->mMeshes[0];
 
     float *vertexArray;
     //not yet// float *normalArray;
     float *uvArray;
 
+
     int numVerts;
 
     // extract data
     numVerts = mesh->mNumFaces*3;
-
     *data = new Vertex[numVerts];
-
     vertexArray = new float[mesh->mNumFaces*3*3];
     //normalArray = new float[mesh->mNumFaces*3*3];
     uvArray = new float[mesh->mNumFaces*3*2];
 
-     
+
     for(unsigned int i=0;i<mesh->mNumFaces;i++)
     {
         const aiFace& face = mesh->mFaces[i];
         
         for(int j=0;j<3;j++)
         {
-            
-            aiVector3D uv = mesh->mTextureCoords[0][face.mIndices[j]];
-            memcpy(uvArray,&uv,sizeof(float)*2);
-            uvArray+=2;
+            if ( mesh->HasTextureCoords( 0 ) )
+            {
+                 aiVector3D uv = mesh->mTextureCoords[0][face.mIndices[j]];
+                 memcpy(uvArray,&uv,sizeof(float)*2);
+                 uvArray+=2;
+            }
              
             /*
             aiVector3D normal = mesh->mNormals[face.mIndices[j]];
@@ -385,26 +378,40 @@ bool loadOBJ(const char * obj, Vertex **data)
     vertexArray-=mesh->mNumFaces*3*3;
 
 
-    int index = 0;
+    int vertIndex = 0;
     int uvIndex = 0;
     // For each vertex of each triangle
-    for( int i=0; i<numVerts*3; i=i+3 )
+    for( int i=0; i < numVerts; i++ )
         {
-         
+        
          // update our vertex data
-         data[0][index].position[0] = vertexArray[i];
-         data[0][index].position[1] = vertexArray[i+1];
-         data[0][index].position[2] = vertexArray[i+2];
+         data[0][i].position[0] = vertexArray[vertIndex];
+         data[0][i].position[1] = vertexArray[vertIndex+1];
+         data[0][i].position[2] = vertexArray[vertIndex+2];
 
          // update uv coords
-         data[0][index].uv[0] = uvArray[uvIndex];
-         data[0][index].uv[1] = uvArray[uvIndex+1];
+         data[0][i].uv[0] = uvArray[uvIndex];
+         data[0][i].uv[1] = uvArray[uvIndex+1];
 
-
-         index++;
          uvIndex+=2;
+         vertIndex+=3;       
          numberTriangles++;
         }
+
+
+    // get text file name
+    const aiMaterial* material = scene->mMaterials[1]; 
+    aiString path;  // filename
+    if( mesh->HasTextureCoords( 0 ) )
+        { 
+         material->GetTexture(aiTextureType_DIFFUSE, 0, &path); 
+         textureFileName = path.data; 
+        }
+    else
+        {
+         std::cerr << "obj loader warrning: no texture file specified in obj file" << endl;
+        }
+
 
     return true;
 }
@@ -449,11 +456,11 @@ void handleSpecialKeypress(int key, int x, int y)
     switch (key) 
     {
     case GLUT_KEY_LEFT:
-    objectsDataList.changeRotationDir( "object" );
+    objectsDataList.changeRotationDir( "sun" );
    
     break;
     case GLUT_KEY_RIGHT:
-    objectsDataList.changeOrbitDir( "object" );
+    objectsDataList.changeOrbitDir( "sun" );
     break;
     }
 }
@@ -468,12 +475,12 @@ void keyboard(unsigned char key, int x_pos, int y_pos)
     else if(key == 'a')
     {
         // change rotation direction here
-        objectsDataList.changeRotationDir( "object" );
+        objectsDataList.changeRotationDir( "sun" );
     }
     else if(key == 'd')
     {
         // change rotation direction here
-        objectsDataList.changeOrbitDir( "object" );
+        objectsDataList.changeOrbitDir( "sun" );
     }
 
 } 
@@ -483,7 +490,7 @@ void myMouse(int button, int state, int x, int y)
     if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
          // change rotation direction here
-         objectsDataList.changeRotationDir( "object" );
+         objectsDataList.changeRotationDir( "sun" );
     } 
 }
 
@@ -496,10 +503,10 @@ void demo_menu(int id)
          exit(0);
          break;
          case 2:
-         objectsDataList.pauseRotation( "object" );
+         objectsDataList.pauseRotation( "sun" );
          break;
          case 3:
-         objectsDataList.pauseOrbit( "object" );
+         objectsDataList.pauseOrbit( "sun" );
          break;
 
     }
