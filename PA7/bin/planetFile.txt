@@ -1,6 +1,54 @@
-sun 0 none 432474 sunmap.jpg 0 0 1 0
-mercury 0 sun 1516 mercurymap.jpg 0.467 0.307 2 .5
-venus 0 sun 3760 venusmap.jpg 0.728 0.718 2 .4
-earth 0 sun 3959 earth.jpg 1.017 0.983 2 .3
-mars 0 sun 2106 marsmap.jpg 1.666 1.382 2 .2
-// this is what the data is supposed to look like: fin >> objectName >> isParent >> parentName >> scale >> textureName >> xOrbit >> yOrbit >> rotSpeed >> orbSpeed; scale is planet radius in miles, orbit x and y are AU. 
+sun 0 none 432474 sunmap.jpg 0 0 1 0 A
+mercury 0 sun 1516 mercurymap.jpg 0.567 0.407 2 .12 N
+venus 0 sun 3760 venusmap.jpg 0.728 0.718 -2 .35 N
+earth 0 sun 3959 earth.jpg 1.017 0.983 2 .29 N
+mars 0 sun 2106 marsmap.jpg 1.666 1.382 2 .24 N
+jupitar 0 sun 44625 jupitermap.jpg 5.455 4.951 2 .13 N
+saturn 0 sun 32500 saturnmap.jpg 10.044 9.014 2 .09 N
+uranus 0 sun 15974 uranusmap.jpg 20.07 18.31 -2 .06 N
+neptune 0 sun 15477 neptunemap.jpg 30.36 29.76 2 .05 N
+pluto 0 sun 718.75 plutomap.jpg 34.33 29.73 2 .045 N
+satRing 0 sun 50000 satRing2.png 10.044 9.014 2 .09 N
+sky 0 sun 10000000 sky2.jpg 0 0 .01 0 N
+
+mercuryZoom 0 sun 15000 mercurymap.jpg 0.51 0.5 2 .12 Z
+venusZoom 0 sun 35000 venusmap.jpg 1.1 1 -2 .35 Z
+earthZoom 0 sun 40000 earth.jpg 1.35 1.25 2 .29 Z
+marsZoom 0 sun 20000 marsmap.jpg 1.6 1.5 2 .24 Z
+jupitarZoom 0 sun 250000 jupitermap.jpg 2.1 2 2 .13 Z
+saturnZoom 0 sun 150000 saturnmap.jpg 2.6 2.5 2 .09 Z
+uranusZoom 0 sun 100000 uranusmap.jpg 3.1 3 -2 .06 Z
+neptuneZoom 0 sun 100000 neptunemap.jpg 3.6 3.5 2 .05 Z
+plutoZoom 0 sun 10500 plutomap.jpg 4.1 4 2 .045 Z
+satRingZoom 0 sun 250000 satRing2.png 2.6 2.5 2 .09 Z
+sky 0 sun 15000000 sky2.jpg 0 0 .01 0 Z
+
+moonEarthZoom 0 earthZoom 7000 plutomap.jpg 0.1 0.1 4 .4 Z
+moonMarsZoom 0 marsZoom 7000 plutomap.jpg 0.1 0.1 2 .23 Z
+moonJupitarZoom 0 jupitarZoom 7000 plutomap.jpg .4 .4 2 .23 Z
+moonJupitar2Zoom 0 jupitarZoom 7000 plutomap.jpg .4 .4 2 .33 Z
+moonSaturnZoom 0 saturnZoom 7000 plutomap.jpg 0.3 0.3 2 .23 Z
+moonUranusZoom 0 uranusZoom 7000 plutomap.jpg 0.3 0.3 2 .23 Z
+moonNeptuneZoom 0 neptuneZoom 7000 plutomap.jpg 0.3 0.3 2 .23 Z
+moonPlutoZoom 0 plutoZoom 7000 plutomap.jpg 0.1 0.1 2 .35 Z
+
+mercuryCam 0 mercury 718.75 CameraMoon.jpg .03 .03 2 .12 N
+venusCam 0 venus 718.75 CameraMoon.jpg .04 .04 -2 .35 N
+earthCam 0 earth 718.75 CameraMoon.jpg .04 .04 2 .29 N
+marsCam 0 mars 718.75 CameraMoon.jpg .04 .04 2 .24 N 
+jupitarCam 0 jupitar 718.75 CameraMoon.jpg .13 .13 2 .13 N
+saturnCam 0 saturn 718.75 CameraMoon.jpg .11 .11 2 .09 N
+uranusCam 0 uranus 718.75 CameraMoon.jpg .10 .10 -2 .06 N
+neptuneCam 0 neptune 718.75 CameraMoon.jpg .10 .10 2 .05 N
+plutoCam 0 pluto 1718.75 CameraMoon.jpg .05 .05 2 .045 N
+
+moonEarth 0 earth 718.75 plutomap.jpg 0.01 0.01 2 2 N
+moonMars 0 mars 718.75 plutomap.jpg 0.02 0.02 2 .023 N
+moonJupitar 0 jupitar 1516 plutomap.jpg 0.15 0.12 2 .23 N
+moonJupitar2 0 jupitar 3959 plutomap.jpg 0.24 0.15 2 .33 N
+moonSaturn 0 saturn 3003 plutomap.jpg 0.23 0.14 2 .23 N
+moonUranus 0 uranus 1500 plutomap.jpg 0.15 0.12 2 .23 N
+moonNeptune 0 neptune 1700 plutomap.jpg 0.12 0.11 2 .23 N
+moonPluto 0 pluto 500 plutomap.jpg 0.1 0.1 2 .045 N
+
+// this is what the data is supposed to look like: fin >> objectName >> isParent >> parentName >> scale >> textureName >> xOrbit >> yOrbit >> rotSpeed >> orbSpeed >> planetSet; scale is planet radius in miles, orbit x and y are AU, orbitSpeed = the average orbital velocity divided by 100, planetSet A = Always render, N = no zoom, Z = zoom.

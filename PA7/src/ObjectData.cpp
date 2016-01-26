@@ -14,6 +14,7 @@
 
 using namespace std;
 
+// returns the object name for the give index
 string ObjectData::getObjectName(int index)
 {
     int counter = 0;
@@ -39,7 +40,7 @@ int ObjectData::getNumObjects()
         {
          size++;
         }
-
+    
     return size;
 
 }
@@ -70,56 +71,52 @@ void ObjectData::loadTexture(string objID, string textureFileName)
         {
             if ( iter->id == objID )
             {
-               
-          
+                // load texture image
+                Magick::InitializeMagick("");
+                Magick::Image image;
+                Magick::Blob m_blob;
+                try 
+                    { 
+                     // Read a file into image object 
+                     if ( textureFileName != "")
+                        {
+                         image.read( textureFileName );
+                         image.flip();
+                         image.write(&m_blob, "RGBA");
+                        }
+                     else
+                        {
+                         throw std::invalid_argument("No texture file found");
+                        }
 
- // load texture image
-    Magick::InitializeMagick("");
-    Magick::Image image;
-    Magick::Blob m_blob;
-    try 
-        { 
-         // Read a file into image object 
-         if ( textureFileName != "")
-            {
-             image.read( textureFileName );
-             image.flip();
-             image.write(&m_blob, "RGBA");
-            }
-         else
-            {
-             throw std::invalid_argument("No texture file found");
-            }
+                    } 
+                catch(exception& tmp) 
+                    { 
+                     cout << "Error while reading in texture image, texture file not found"  << endl; 
+                    } 
 
-        } 
-    catch(exception& tmp) 
-        { 
-         cout << "Error while reading in texture image, texture file not found"  << endl; 
-        } 
-
-    int imageWidth = image.columns();
-    int imageHeight = image.rows();
+                int imageWidth = image.columns();
+                int imageHeight = image.rows();
 
 
-    // setup texture
-    glGenTextures(1, &(iter->bTexture)); 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,  iter->bTexture);
+                // setup texture
+                glGenTextures(1, &(iter->bTexture)); 
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D,  iter->bTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_blob.data());
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_blob.data());
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  }
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                }
         }
 
 }
 
-
 GLuint ObjectData::getTexture(string id)
 {
     list<singleObject>::iterator iter;
-    for (iter = listOfObjects.begin() ; iter != listOfObjects.end(); iter++)
+    for (iter = listOfObjects.begin(); iter != listOfObjects.end(); iter++)
         {
             if ( iter->id == id )
             {
@@ -128,6 +125,19 @@ GLuint ObjectData::getTexture(string id)
         }
     // if not found return blank slate
     return 0;
+}
+
+char ObjectData::getPlanetSet(string id)
+{
+	list<singleObject>::iterator iter;
+	for (iter = listOfObjects.begin(); iter != listOfObjects.end(); iter++)
+	    {
+	        if ( iter->id == id )
+	        {
+	            return  iter->planetSet;
+	        }
+	    }
+	return '\0';
 }
 
 // returns the model matrix of the object with the specified id
@@ -166,7 +176,6 @@ void ObjectData::updateObjects(float dt)
             {
                  // do nothing, rotation is paused
             }
-
 
            // update orbit
             if ( iter->orbitStatus == 1 )
@@ -221,7 +230,7 @@ void ObjectData::updateObjects(float dt)
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv//
 /////////////////////////////////////////////////
 
-void ObjectData::setSpecialValues(string objectName, float xOrbit, float yOrbit, float rotSpeed, float orbSpeed)
+void ObjectData::setSpecialValues(string objectName, float xOrbit, float yOrbit, float rotSpeed, float orbSpeed, char planetSet)
 {
     // iterate over all objects
     list<singleObject>::iterator iter;
@@ -234,6 +243,7 @@ void ObjectData::setSpecialValues(string objectName, float xOrbit, float yOrbit,
              iter->yOrbitSkew = yOrbit;
              iter->rotationSpeed = rotSpeed;
              iter->orbitSpeed = orbSpeed;
+			 iter->planetSet = planetSet;
             }
 
         }

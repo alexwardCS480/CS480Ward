@@ -215,6 +215,7 @@ void update()
 
 bool initialize(char* fileName)    
 {
+    bool loadedSuccess = true;
 
     // create the main planet cube and moon cube objects
     objectsDataList.addObject("object", true, "", 4.0f);            // add object with id = planetCube, with scale of 1 
@@ -222,7 +223,7 @@ bool initialize(char* fileName)
     // here is the function def for reference
     // void addObject(string objID, bool isPlanet, string parent, float scale);
 
-    objectsDataList.setSpecialValues("object", 1.0, 1.0, 0.1f, 0.1f);   // lets make moon rotate faster and skew orbit in x direction for elliptical orbit
+    objectsDataList.setSpecialValues("object", 1.0, 1.0, .3f, 0.1f);   // lets make moon rotate faster and skew orbit in x direction for elliptical orbit
     // here is the function def for reference
     // void setSpecialValues(string objectName, float xOrbit, float yOrbit, float rotSpeed, float orbSpeed);
 
@@ -230,7 +231,12 @@ bool initialize(char* fileName)
     // to load the OBJ file
     Vertex *geometry;
 
-    loadOBJ(fileName, &geometry);
+    loadedSuccess = loadOBJ(fileName, &geometry);
+    if ( !loadedSuccess )
+    {
+        cout << "OBJ file not found or invalid format" << endl;
+        return false;
+    }
 
     // Create a Vertex Buffer object to store this vertex info on the GPU
     glGenBuffers(1, &vbo_geometry);
@@ -276,7 +282,7 @@ bool initialize(char* fileName)
     //  for this project having them static will be fine
     view = glm::lookAt( glm::vec3(0.0, 8.0, -16.0), //Eye Position
                         glm::vec3(0.0, 0.0, 0.0), //Focus point
-                        glm::vec3(0.0, 1.0, 0.0)); //Positive Y is up
+                        glm::vec3(0.0, 0.0, 1.0)); //Positive Y is up
 
     projection = glm::perspective( 45.0f, //the FoV typically 90 degrees is good which is what this is set to
                                    float(w)/float(h), //Aspect Ratio, so Circles stay Circular
@@ -284,17 +290,18 @@ bool initialize(char* fileName)
                                    100.0f); //Distance to the far plane, 
 
 
-
-    
     // load texture image
     Magick::InitializeMagick("");
     Magick::Image image;
+    Magick::Blob m_blob;
     try 
         { 
          // Read a file into image object 
          if ( textureFileName != "")
             {
              image.read( textureFileName );
+             image.flip();
+             image.write(&m_blob, "RGBA");
             }
          else
             {
@@ -310,16 +317,13 @@ bool initialize(char* fileName)
     int imageWidth = image.columns();
     int imageHeight = image.rows();
 
-    // get a "pixel cache" for the entire image
-    Magick::PixelPacket *pixels = image.getPixels(0, 0, imageWidth, imageHeight);
-
 
     // setup texture
     glGenTextures(1, &aTexture); 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, aTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_blob.data());
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -337,6 +341,11 @@ bool loadOBJ(const char * obj, Vertex **data)
 {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(obj, aiProcess_Triangulate); 
+
+    if ( scene==NULL )
+        {
+         return false;
+        }
 
     aiMesh *mesh = scene->mMeshes[0];
 
@@ -386,27 +395,25 @@ bool loadOBJ(const char * obj, Vertex **data)
     vertexArray-=mesh->mNumFaces*3*3;
 
 
-    int index = 0;
+    int vertIndex = 0;
     int uvIndex = 0;
     // For each vertex of each triangle
-    for( int i=0; i<numVerts*3; i=i+3 )
+    for( int i=0; i < numVerts; i++ )
         {
-         
+        
          // update our vertex data
-         data[0][index].position[0] = vertexArray[i];
-         data[0][index].position[1] = vertexArray[i+1];
-         data[0][index].position[2] = vertexArray[i+2];
+         data[0][i].position[0] = vertexArray[vertIndex];
+         data[0][i].position[1] = vertexArray[vertIndex+1];
+         data[0][i].position[2] = vertexArray[vertIndex+2];
 
          // update uv coords
-         data[0][index].uv[0] = uvArray[uvIndex];
-         data[0][index].uv[1] = uvArray[uvIndex+1];
+         data[0][i].uv[0] = uvArray[uvIndex];
+         data[0][i].uv[1] = uvArray[uvIndex+1];
 
-
-         index++;
-         uvIndex+=2;    
+         uvIndex+=2;
+         vertIndex+=3;       
          numberTriangles++;
         }
-
 
 
     // get text file name

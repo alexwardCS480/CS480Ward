@@ -1,4 +1,4 @@
-Alex Ward PA2
+Alex Ward, Jeffrey Bouchard PA7 Solar System
 ========================================
 
 
@@ -29,10 +29,21 @@ This program uses Magic++ and Assimp, please ensure both are installed on your m
 Run Notes:
 ------------------------------
 
-Enter the file name of the object that you would like to load as command line paramaters. For example: './Matrix.exe capsule.obj'
+To run the file simply type: "./Matrix.exe" into the terminal while in the bin folder.
 
-The capsule rotates and orbits so the grader can see all sides. 
+The planets rotate around the sun. The camera follows as the planets rotate.
 
-Press the right mouse button to open the programs menu. From the menu you can pause the capsule's rotation and orbit.
+Press 1-9 to highlight a planet.
 
-Press the left mouse button to reverse the capsule's orbit.
+Press the arrow keys to cycle through the planets when in the actual data view. 
+
+Press the right mouse button to open the programs menu. You can either exit the program or you can switch views. You can switch to either the Actual Data View or the Scaled View. 
+
+Left clicking will stop the rotations and the orbits for all planets. 
+
+Extra Credit:
+---------------------
+1) The option to go from actual data to a scaled view is availble. Access this feature in the menu by pressing the right mouse button.
+
+
+2) The option to highlight specific planets (while in the scaled view) is available. This feature makes it easy to identify each planet. Press the 1-9 keys to highlight planets. 

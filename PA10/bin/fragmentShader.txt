@@ -1,0 +1,87 @@
+varying vec2 uv;
+
+varying vec3 N;
+varying vec3 E;
+varying vec3 L;
+varying float lightType;
+
+uniform sampler2D gSampler; 
+
+void main(void){
+
+    // initialize data
+    vec4 ambientProduct;
+    ambientProduct = vec4( .1, .1, .1, 1);
+
+    vec4 diffuseProduct;
+    diffuseProduct = vec4( .5, .5, 1, 1);
+
+    vec4 specularProduct;
+    specularProduct = vec4( 1, 1, 1, 1);
+
+    float shininess;
+    shininess = 70.f;
+
+    float inten = 10.f;
+    vec4 fLight;
+
+
+    // normalize data
+    vec3 fN = normalize(N);
+    vec3 fE = normalize(E);
+    vec4 ambient, diffuse, specular;
+
+
+    if ( lightType == 2.f)
+        {
+         specularProduct = vec4( 1, 0, 0, 1);
+         shininess = 128.f;
+        }
+
+
+    //perform calculations
+    vec3 fL = normalize(L);
+    vec3 fH = normalize(fL + fE);
+
+
+    // get diffuse data
+    float kD = max(dot(fL,fN), 0.0);
+    diffuse = kD * diffuseProduct;
+
+    float kS = pow(max(dot(reflect(-fL, fN), fE), 0.0), shininess);  
+    specular = kS * specularProduct ;
+
+
+    //make black
+    if(dot(fL,N) < 0.0)
+         {
+          specular = vec4(0.0, 0.0, 0.0, 1.0); 
+         }
+
+
+    // toggle light type based on key pressed passed in from main
+    if (lightType == 0.f )
+        {
+         fLight = ambientProduct;
+        }
+    else if (lightType == 1.f )
+        {
+         fLight = diffuse;
+        }
+    else if (lightType == 2.f )
+        {
+         fLight = specular;
+        }
+    else if (lightType == 3.f )
+        {
+         fLight =  (specular*inten);    
+        }
+    else if (lightType == 4.f )
+        {
+         fLight =  (specular + diffuse + ambientProduct);    
+        }
+      
+    // set color of light and texture
+    gl_FragColor = fLight * texture2D( gSampler, uv.xy );
+
+} 

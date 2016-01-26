@@ -1,0 +1,26 @@
+attribute vec3 v_position;
+attribute vec2 v_uv;
+attribute vec3 v_normal;
+uniform float v_lightType;
+
+uniform mat4 mvpMatrix;
+
+varying vec3 N;
+varying vec3 E;
+varying vec3 L;
+varying float lightType;
+
+varying vec2 uv;
+
+void main(void){
+
+//set position
+gl_Position = mvpMatrix * vec4(v_position, 1.0);
+
+// pass data to FS
+uv = v_uv;
+N = v_normal;
+E = v_position;
+L = vec3(0,12,2);  //lightPosition
+lightType = v_lightType;
+}

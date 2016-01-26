@@ -1,0 +1,107 @@
+varying vec2 uv;
+
+varying vec3 N;
+varying vec3 E;
+varying vec3 L;
+varying vec3 L2;
+varying float lightType;
+varying float lightType2;
+
+uniform sampler2D gSampler; 
+
+void main(void){
+
+    // initialize data
+    vec4 ambientProduct;
+    ambientProduct = vec4( .3, .3, .3, 1);
+
+    vec4 diffuseProductBlue, diffuseProductRed, diffuseProductNorm;
+    diffuseProductBlue = vec4( .5, .5, 1, 1);
+    diffuseProductRed = vec4( 1, .5, .5, 1);
+    diffuseProductNorm = vec4( .01, .01, .01, 1);
+
+    vec4 specularProduct;
+    specularProduct = vec4( 1, 1, 1, 1);
+
+    float shininess;
+    shininess = 70.f;
+
+    float inten = 10.f;
+    vec4 fLight;
+    fLight = vec4( 1, 1, 1, 1);
+
+
+    // normalize data
+    vec3 fN = normalize(N);
+    vec3 fE = normalize(E);
+    vec4 ambient, diffuse, specular;
+
+    //perform calculations
+    vec3 fL = normalize(L);
+    vec3 fH = normalize(fL + fE);
+
+
+    // get diffuse data
+    float kD = max(dot(fL,fN), 0.0);
+    diffuse = kD * diffuseProductBlue;
+
+    float kS = pow(max(dot(reflect(-fL, fN), fE), 0.0), shininess);  
+    specular = kS * specularProduct;
+
+    //make black
+    if(dot(fL,N) < 0.0)
+         {
+          specular = vec4(0.0, 0.0, 0.0, 1.0); 
+         }
+
+// light source 2
+    vec4 fLight2;
+    fLight2 = vec4( 1, 1, 1, 1);
+
+    // normalize data
+    vec3 fN2 = normalize(N);
+    vec3 fE2 = normalize(E);
+    vec4 ambient2, diffuse2, specular2;
+
+    //perform calculations
+    vec3 fL2 = normalize(L2);
+    vec3 fH2 = normalize(fL2 + fE2);
+
+
+    // get diffuse data
+    float kD2 = max(dot(fL2,fN2), 0.0);
+    diffuse2 = kD2 * diffuseProductRed;
+
+    float kS2 = pow(max(dot(reflect(-fL2, fN2), fE2), 0.0), shininess);  
+    specular2 = kS2 * specularProduct;
+
+    //make black
+    if(dot(fL2,N) < 0.0)
+         {
+          specular2 = vec4(0.0, 0.0, 0.0, 1.0); 
+         }
+
+
+    // toggle light type based on key pressed passed in from main
+    if (lightType == 0.f )
+        {
+         fLight = ambientProduct + ( kD * diffuseProductNorm);
+        }
+    else if (lightType == 1.f )
+        {
+         fLight = diffuse;
+        }
+    
+    if (lightType2 == 0.f )
+        {
+         fLight2 = ambientProduct + ( kD * diffuseProductNorm);
+        }
+    else if (lightType2 == 1.f )
+        {
+         fLight2 = diffuse2;
+        }
+      
+    // set color of light and texture
+    gl_FragColor = (fLight + fLight2) * texture2D( gSampler, uv.xy );
+
+} 

@@ -23,14 +23,12 @@
 #include <assimp/postprocess.h> //includes the postprocessing variables for the importer 
 #include <assimp/color4.h> //includes the aiColor4 object, which is used to handle the colors from the mesh objects 
 
-#include <Magick++.h> 
-
 //--Data types
 //This object will define the attributes of a vertex(position, color, etc...)
 struct Vertex
 {
     GLfloat position[3];
-    GLfloat uv[2];
+    GLfloat color[3];
 };
 
 //--Evil Global variables
@@ -38,6 +36,7 @@ struct Vertex
 int w = 640, h = 480;// Window size
 GLuint program;// The GLSL program handle
 GLuint vbo_geometry;// VBO handle for our geometry
+int NUM_VERTICES = 400; // max
 
 //Make an object class containing a list of all objects to store rotation/orbit flags
 ObjectData objectsDataList;
@@ -47,8 +46,7 @@ GLint loc_mvpmat;// Location of the modelviewprojection matrix in the shader
 
 //attribute locations
 GLint loc_position;
-GLint loc_uv;
-GLuint aTexture;
+GLint loc_color;
 
 //transform matrices
 glm::mat4 view;//world->eye
@@ -71,7 +69,7 @@ void cleanUp();
 
 // custom
 void renderObject ( glm::mat4 MVP );
-bool loadOBJ(const char * obj, Vertex **data);
+bool loadOBJ(const char * obj, Vertex *geometry);
 int numberTriangles = 0;
 
 //--Random time things
@@ -89,7 +87,7 @@ int main(int argc, char *argv[])
     //std::string defualtOBJName = "hockeyTable.obj";
 
     // Name and create the Window
-    glutCreateWindow("Hockey Table Example");
+    glutCreateWindow("Moon Orbit Example");
 
     // create menu for window
     glutCreateMenu(demo_menu);
@@ -159,7 +157,7 @@ void render()
 
     //clean up
     glDisableVertexAttribArray(loc_position);
-    glDisableVertexAttribArray(loc_uv);
+    glDisableVertexAttribArray(loc_color);
                            
     //swap the buffers
     glutSwapBuffers();
@@ -170,14 +168,11 @@ void renderObject ( glm::mat4 MVP )
 
     //upload the matrix to the shader
     glUniformMatrix4fv(loc_mvpmat, 1, GL_FALSE, glm::value_ptr(MVP));
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, aTexture);
 
 
     //set up the Vertex Buffer Object so it can be drawn
-
     glEnableVertexAttribArray(loc_position);
-    glEnableVertexAttribArray(loc_uv);
+    glEnableVertexAttribArray(loc_color);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_geometry);
     //set pointers into the vbo for each of the attributes(position and color)
     glVertexAttribPointer( loc_position,//location of attribute
@@ -187,15 +182,12 @@ void renderObject ( glm::mat4 MVP )
                            sizeof(Vertex),//stride
                            0);//offset
 
-
-
-
-    glVertexAttribPointer( loc_uv,
-                           2,
+    glVertexAttribPointer( loc_color,
+                           3,
                            GL_FLOAT,
                            GL_FALSE,
                            sizeof(Vertex),
-                           (void*)offsetof(Vertex,uv));
+                           (void*)offsetof(Vertex,color));
 
     glDrawArrays(GL_TRIANGLES, 0, numberTriangles);//mode, starting index, count
 
@@ -230,17 +222,17 @@ bool initialize(char* fileName)
 
 
     // to load the OBJ file
-    Vertex *geometry;
-    
-    loadOBJ(fileName, &geometry);
+    //Vertex* geometry= NULL;
+    Vertex geometry [50000];
+    loadOBJ(fileName, geometry);
+
 
 
     // Create a Vertex Buffer object to store this vertex info on the GPU
     glGenBuffers(1, &vbo_geometry);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_geometry);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(geometry)*numberTriangles*3, geometry, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(geometry), geometry, GL_STATIC_DRAW);
 
-    delete geometry;
 
     //--Load vertex shader and fragment shader from 2 text files
     ShaderLoader loader("vertexShader.txt", "fragmentShader.txt");
@@ -257,11 +249,11 @@ bool initialize(char* fileName)
         return false;
     }
 
-    loc_uv = glGetAttribLocation(program,
-                    const_cast<const char*>("v_uv"));
-    if(loc_uv == -1)
+    loc_color = glGetAttribLocation(program,
+                    const_cast<const char*>("v_color"));
+    if(loc_color == -1)
     {
-        std::cerr << "[F] V_UV NOT FOUND" << std::endl;
+        std::cerr << "[F] V_COLOR NOT FOUND" << std::endl;
         return false;
     }
 
@@ -286,54 +278,15 @@ bool initialize(char* fileName)
                                    0.01f, //Distance to the near plane, normally a small value like this
                                    100.0f); //Distance to the far plane, 
 
-
-
-
-    // load in image
-    Magick::InitializeMagick("");
-
-
-    Magick::Image image;
-    try 
-        { 
-         // Read a file into image object 
-         image.read( "capsule0" );
-
-        } 
-    catch(exception& tmp) 
-        { 
-         cout << "Caught exception: "  << endl; 
-
-        } 
-
-    int imageWidth = image.columns();
-    int imageHeight = image.rows();
-
-    // get a "pixel cache" for the entire image
-    Magick::PixelPacket *pixels = image.getPixels(0, 0, imageWidth, imageHeight);
-
-
-    // setup texture
-    glGenTextures(1, &aTexture); 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, aTexture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     //enable depth testing
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-
-
 
     //and its done
     return true;
 }
 
-bool loadOBJ(const char * obj, Vertex **data)
+bool loadOBJ(const char * obj, Vertex *data)
 {
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(obj, aiProcess_Triangulate); 
@@ -342,18 +295,17 @@ bool loadOBJ(const char * obj, Vertex **data)
 
     float *vertexArray;
     //not yet// float *normalArray;
-    float *uvArray;
+    //not yet// float *uvArray;
 
     int numVerts;
 
     // extract data
     numVerts = mesh->mNumFaces*3;
 
-    *data = new Vertex[numVerts];
 
     vertexArray = new float[mesh->mNumFaces*3*3];
     //normalArray = new float[mesh->mNumFaces*3*3];
-    uvArray = new float[mesh->mNumFaces*3*2];
+    //uvArray = new float[mesh->mNumFaces*3*2];
 
      
     for(unsigned int i=0;i<mesh->mNumFaces;i++)
@@ -362,12 +314,11 @@ bool loadOBJ(const char * obj, Vertex **data)
         
         for(int j=0;j<3;j++)
         {
-            
+            /* not using yet
             aiVector3D uv = mesh->mTextureCoords[0][face.mIndices[j]];
             memcpy(uvArray,&uv,sizeof(float)*2);
             uvArray+=2;
              
-            /*
             aiVector3D normal = mesh->mNormals[face.mIndices[j]];
             memcpy(normalArray,&normal,sizeof(float)*3);
             normalArray+=3;
@@ -375,34 +326,32 @@ bool loadOBJ(const char * obj, Vertex **data)
             aiVector3D pos = mesh->mVertices[face.mIndices[j]];
             memcpy(vertexArray,&pos,sizeof(float)*3);
             vertexArray+=3;
-
         }
 
     }
      
-    uvArray-=mesh->mNumFaces*3*2;
+
+    //uvArray-=mesh->mNumFaces*3*2;
     //normalArray-=mesh->mNumFaces*3*3;
     vertexArray-=mesh->mNumFaces*3*3;
 
 
     int index = 0;
-    int uvIndex = 0;
     // For each vertex of each triangle
     for( int i=0; i<numVerts*3; i=i+3 )
         {
          
          // update our vertex data
-         data[0][index].position[0] = vertexArray[i];
-         data[0][index].position[1] = vertexArray[i+1];
-         data[0][index].position[2] = vertexArray[i+2];
+         data[index].position[0] = vertexArray[i];
+         data[index].position[1] = vertexArray[i+1];
+         data[index].position[2] = vertexArray[i+2];
 
-         // update uv coords
-         data[0][index].uv[0] = uvArray[uvIndex];
-         data[0][index].uv[1] = uvArray[uvIndex+1];
-
+         // update color data. lets make it change a little for each triangle
+         data[index].color[0] = (index%3)*.5;
+         data[index].color[1] = (index%3)*.5;
+         data[index].color[2] = (index%3)*.5;
 
          index++;
-         uvIndex+=2;
          numberTriangles++;
         }
 
@@ -505,5 +454,6 @@ void demo_menu(int id)
     }
     glutPostRedisplay();
 }
+
 
 

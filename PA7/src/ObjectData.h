@@ -33,6 +33,7 @@ struct singleObject
     float yOrbitSkew = 4.0;
     float rotationSpeed = 1.0;
     float orbitSpeed = 1.0;
+	char planetSet;
 
     };
 
@@ -57,13 +58,14 @@ class ObjectData
 
     void changeRotationDir(string objectName);
     void changeOrbitDir(string objectName);
+	char getPlanetSet(string objectName);
 
     void pauseRotation(string objectName);
     void pauseOrbit(string objectName);
-    void setSpecialValues(string objectName, float xOrbit, float yOrbit, float rotSpeed, float orbSpeed);
+    void setSpecialValues(string objectName, float xOrbit, float yOrbit, float rotSpeed, float orbSpeed, char planetSet);
 
   private:
-    // the actual list of all objects, private so must be accessed throught 
+    // the actual list of all objects, private so must be accessed through 
     // helper functions
     list<singleObject> listOfObjects;
 

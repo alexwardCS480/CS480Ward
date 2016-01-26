@@ -22,13 +22,17 @@ To build this example just
 The excutable will be put in bin
 
 
+This program uses Magic++ and Assimp, please ensure both are installed on your machine before running.
+
+
 
 Run Notes:
 ------------------------------
 
-The hockey table rotates and orbits so the grader can see all sides. The color changes slightly between triangles in order to see the object correctly. 
+Enter the file name of the object that you would like to load as command line paramaters. For example: './Matrix.exe capsule.obj'
 
-Press the right mouse button to open the programs menu. From the menu you can pause the hockey table's rotation and orbit.
+The capsule rotates and orbits so the grader can see all sides. 
 
+Press the right mouse button to open the programs menu. From the menu you can pause the capsule's rotation and orbit.
 
-Press the left mouse button to reverse the hockey table's orbit.
+Press the left mouse button to reverse the capsule's orbit.
